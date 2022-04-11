@@ -1,0 +1,77 @@
+USE EMarket;
+ 
+  -- PARTE 1 
+  
+ -- 1 Faça uma consulta sobre o faturamento do e-market. Inclua as seguintes informações:
+ -- ID da fatura, data da fatura, nome da empresa de correio (O id da empresa consta da 
+ -- tabela faturas no campo FormaEnvio), nome do cliente, categoria do produto vendido
+ -- nome do produto(Você chega ao produto consultando os detalhes da fatura), preço unitário, quantidade
+ 
+SELECT
+	faturas.FaturaId AS "Fatura ID", faturas.DataFatura AS "Data da Fatura",
+    correios.Empresa AS "Empresa do envio", clientes.Empresa AS "Cliente", 
+    categorias.CategoriaNome AS "Categoria", produtos.ProdutoNome AS "Produto",
+    produtos.PrecoUnitario AS "Preço Unitário", detalhefatura.Quantidade AS "Quantidade"
+FROM faturas
+INNER JOIN clientes ON faturas.ClienteID = clientes.ClienteID
+INNER JOIN correios ON correios.CorreioID = faturas.FormaEnvio
+INNER JOIN detalhefatura ON detalhefatura.FaturaId = faturas.FaturaId
+INNER JOIN produtos ON produtos.ProdutoID = detalhefatura.ProdutoID 
+INNER JOIN categorias ON categorias.CategoriaID = produtos.CategoriaID;
+
+   
+-- PARTE 2
+
+-- 1 
+-- Liste todas as categorias junto com informações sobre seus produtos. 
+-- Incluir todas as categorias, mesmo que não tenham produtos.
+
+SELECT
+	categorias.CategoriaNome AS "Nome da Categoria", produtos.ProdutoNome AS "Nome do Produto"
+FROM categorias
+LEFT JOIN produtos ON produtos.CategoriaID = categorias.CategoriaID;
+
+-- 2
+-- Liste as informações de contato de clientes que nunca compraram no emarket.
+
+SELECT 
+	clientes.Contato, clientes.Titulo, clientes.Telefone, faturas.FaturaId
+FROM clientes
+LEFT JOIN faturas ON faturas.ClienteID = clientes.ClienteID
+WHERE faturas.FaturaId IS NULL;
+
+   
+-- 3
+-- Faça uma lista de produtos. Para cada um, indique seu nome, categoria e as 
+-- informações de contato de seu fornecedor. Lembre-se que podem existir produtos para os quais o fornecedor não foi indicado.
+
+SELECT
+	produtos.ProdutoNome AS "Nome do produto", categorias.CategoriaNome AS "Categoria do produto", 
+    provedores.Contato AS "Contato do fornecedor", provedores.Telefone
+FROM produtos
+LEFT JOIN categorias ON categorias.CategoriaID = produtos.CategoriaID
+LEFT JOIN provedores ON provedores.ProvedorID = produtos.ProvedorID;
+
+-- 4 Para cada categoria, liste o preço unitário médio de seus produtos.
+
+SELECT categorias.CategoriaNome AS "Nome da Categoria", 
+AVG(produtos.PrecoUnitario) AS "Preço médio unitário"
+FROM categorias
+JOIN produtos ON categorias.CategoriaID = produtos.CategoriaID
+GROUP BY categorias.CategoriaNome;
+
+-- 5 Para cada cliente, indique a última nota fiscal de compra. Inclua clientes que nunca compraram no e-market.
+
+SELECT clientes.Empresa, MAX(faturas.DataFatura) AS "Data da última fatura"
+FROM clientes
+LEFT JOIN faturas ON faturas.ClienteID = clientes.ClienteID
+GROUP BY clientes.Empresa;
+
+-- 6 Todas as faturas q têm uma empresa de correio associada (envio).
+--  Gere uma lista com todas as empresas de correio e o número de faturas correspondentes. Execute a consulta usando RIGHT JOIN.
+
+SELECT correios.Empresa, COUNT(*) AS "Numero de envios"
+FROM faturas
+RIGHT JOIN correios ON correios.CorreioID = faturas.FormaEnvio
+GROUP BY correios.Empresa;
+

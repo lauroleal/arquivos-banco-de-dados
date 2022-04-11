@@ -1,0 +1,89 @@
+USE Projeto_Spotify;
+
+-- PROCEDURE SEM PARAMETRO NENHUM PARA RETORNAR A DATA ATUAL ESCRITA
+
+DELIMITER $$
+CREATE PROCEDURE SP_GET_DATE()
+BEGIN
+	SELECT
+		concat(
+			dayname(current_date()), ', ', 
+			DAY(current_date()), ', ', 
+            monthname(current_date()), ', ', 
+            year(current_date())
+         );
+END $$
+
+CALL SP_GET_DATE();
+
+-- PROCEDURE PARA CRIPTOGRAFAR A SENHA DO USUARIO A PARTIR DO ID INFORMADO NO PARAMETRO
+
+DELIMITER $$
+CREATE PROCEDURE SP_CRIPTOGRAFA_SENHA (
+	IN paramIdUsuario INT
+)
+BEGIN
+	UPDATE
+		usuario
+	SET
+		senha = MD5(senha)
+	WHERE
+		IdUsuario = paramIdUsuario;
+END $$
+
+CALL SP_CRIPTOGRAFA_SENHA(3);
+
+SELECT
+	senha
+FROM usuario
+WHERE
+	idUsuario = 3;
+
+USE Projeto_Spotify;
+
+-- PROCEDURE PARA VERIFICAR SE A SENHA INFORMADA DO USUARIO EH IGUAL A ANTERIOR
+
+DELIMITER $$
+CREATE PROCEDURE SP_VALIDA_SENHA_IGUAL_ANTERIOR(
+	IN paramIdUsuario INT, 
+	INOUT paramSenha VARCHAR(255)
+)
+BEGIN
+	IF(SELECT senha FROM usuario WHERE idUsuario = paramIdUsuario AND senha = paramSenha) IS NOT NULL
+    THEN SET paramSenha = 'Senha igual a anterior';
+    ELSE
+		UPDATE
+			usuario
+		SET
+			senha = paramSenha
+		WHERE
+			idUsuario = paramIdUsuario;
+    END IF;
+END $$
+
+SET @paramSenha = 'RAMIREZ&88';
+CALL SP_VALIDA_SENHA_IGUAL_ANTERIOR(3, @paramSenha);
+SELECT @paramSenha;
+
+-- PROCEDURE PARA VALIDAR SE O LOGIN DO USUARIO ESTA AUTORIZADO A PARTIR DO ID E SENHA INFORMADOS
+
+DELIMITER $$
+CREATE PROCEDURE SP_VALIDA_LOGIN(
+	IN paramIdUsuario INT,
+    IN paramSenha VARCHAR(255), 
+    OUT retorno VARCHAR(255)
+)
+BEGIN
+	SELECT
+		CASE WHEN md5(paramSenha) = senha
+		THEN 'Login autorizado'
+        ELSE 'Login nÃ£o autorizado'
+        END
+	INTO retorno
+	FROM usuario
+    WHERE
+		idUsuario = paramIdUsuario;
+END $$
+
+CALL SP_VALIDA_LOGIN(3, 'RAMIREZ&88', @retorno);
+SELECT @retorno;
